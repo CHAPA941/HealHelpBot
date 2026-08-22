@@ -564,13 +564,17 @@ async def handle_text(message: types.Message, state: FSMContext):
 # --- ЗАПУСК ---
 if __name__ == '__main__':
     init_db()
-    from flask import Flask
-    app = Flask(__name__)
-    @app.route('/')
-    def index():
-        return f"{BOT_NAME} is running"
+    # Запускаем простой HTTP-сервер для поддержания порта (чтобы Render не уснул)
     import threading
-    def run_flask():
-        app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
-    threading.Thread(target=run_flask).start()
+    import http.server
+    import socketserver
+
+    PORT = int(os.environ.get('PORT', 5000))
+    Handler = http.server.SimpleHTTPRequestHandler
+
+    def run_http():
+        with socketserver.TCPServer(("", PORT), Handler) as httpd:
+            httpd.serve_forever()
+
+    threading.Thread(target=run_http, daemon=True).start()
     executor.start_polling(dp, skip_updates=True)
