@@ -272,6 +272,40 @@ async def start_cmd(message: types.Message):
         parse_mode="Markdown"
     )
 
+# --- НОВАЯ КОМАНДА ДЛЯ ПРОСМОТРА ПОЛЬЗОВАТЕЛЬСКОГО ИНТЕРФЕЙСА ---
+@dp.message_handler(commands=['user_view'])
+async def user_view_cmd(message: types.Message):
+    """Тестовая команда для просмотра пользовательского интерфейса (доступна всем, включая супер-админа)"""
+    user = message.from_user
+    save_user(user.id, user.username, user.full_name)
+    
+    admins = get_all_admins()
+    if not admins:
+        await message.answer(f"😕 Пока нет доступных админов {BOT_NAME}. Попробуйте позже.")
+        return
+    
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    for admin_id, name in admins:
+        keyboard.add(InlineKeyboardButton(f"💬 {name}", callback_data=f"choose_admin_{admin_id}"))
+    
+    await message.answer(
+        f"👋 Добро пожаловать в **{BOT_NAME}** — твоё пространство для поддержки и заботы о себе.\n\n"
+        "Здесь ты можешь анонимно и безопасно поговорить с психологом или просто с добрым собеседником. "
+        "Мы подберем тебе специалиста, который выслушает и поддержит в трудную минуту.\n\n"
+        "🔹 **Как начать?**\n"
+        "1. Выбери админа из списка ниже — это твой будущий собеседник.\n"
+        "2. Укажи тему обращения (просто поговорить, помощь, консультация).\n"
+        "3. Дождись подтверждения — и вы сможете общаться.\n\n"
+        "🔹 **Доступные команды:**\n"
+        "• /start — выбрать или сменить админа\n"
+        "• /change_admin — сменить админа\n"
+        "• /stop — завершить диалог\n"
+        "• /report — пожаловаться на админа\n\n"
+        "Выбери админа, с которым хочешь поговорить:",
+        reply_markup=keyboard,
+        parse_mode="Markdown"
+    )
+
 @dp.message_handler(commands=['change_admin'])
 async def change_admin_cmd(message: types.Message):
     reset_user_connection(message.from_user.id)
